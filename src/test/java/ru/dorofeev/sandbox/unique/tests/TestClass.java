@@ -15,7 +15,7 @@ public class TestClass {
 	@Test
 	public void test() {
 
-		getTextFileReader("build/resources/test/data.txt")
+		getTextFileReader("temp/data.txt")
 			.compose(chars -> wordExtractor(chars, " ,;\n\r\t"))
 			.compose(words -> wordCounter(words, TreeMap::new))
 			.compose(wordCount -> filterByCount(wordCount, c -> c == 1))
@@ -27,9 +27,13 @@ public class TestClass {
 
 			try (FileInputStream fis = new FileInputStream(fileName)) {
 
-				int nextByte;
-				while ( (nextByte = fis.read()) != -1 ) {
-					subscriber.onNext((char) nextByte);
+				byte[] buffer = new byte[32767];
+
+				int bytesRead;
+				while ( (bytesRead = fis.read(buffer)) != -1 ) {
+
+					for (int i = 0; i < bytesRead; i++)
+						subscriber.onNext((char)buffer[i]);
 				}
 
 				subscriber.onCompleted();
