@@ -7,8 +7,14 @@ import rx.functions.Func1;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousFileChannel;
+import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 public class TestClass {
 
@@ -16,10 +22,46 @@ public class TestClass {
 	public void test() {
 
 		getTextFileReader("temp/data.txt")
+		//getAsyncTextFileReader("temp/data.txt")
 			.compose(chars -> wordExtractor(chars, " ,;\n\r\t"))
 			.compose(words -> wordCounter(words, TreeMap::new))
 			.compose(wordCount -> filterByCount(wordCount, c -> c == 1))
 			.subscribe(System.out::println);
+	}
+
+
+	private Observable<Character> getAsyncTextFileReader(String fileName) {
+		return Observable.create(subscriber -> {
+
+			try (AsynchronousFileChannel ch = AsynchronousFileChannel.open(Paths.get(fileName))) {
+
+				ByteBuffer buffer = ByteBuffer.allocate(32767);
+
+				int pos = 0;
+				Future<Integer> res = null;
+				while (true) {
+					if (res == null) {
+						res = ch.read(buffer, pos);
+					}
+
+					Integer bytesRead = res.get();
+					if (bytesRead == -1)
+						break;
+
+					byte[] chunk = Arrays.copyOf(buffer.array(), bytesRead);
+
+					pos = pos + bytesRead;
+					buffer.flip();
+					res = ch.read(buffer, pos);
+
+					for (int i = 0; i < bytesRead; i++)
+						subscriber.onNext((char)chunk[i]);
+				}
+
+			} catch (IOException | InterruptedException | ExecutionException e) {
+				subscriber.onError(e);
+			}
+		});
 	}
 
 	private Observable<Character> getTextFileReader(String fileName) {
@@ -113,3 +155,4 @@ public class TestClass {
 		}
 	}
 }
+
