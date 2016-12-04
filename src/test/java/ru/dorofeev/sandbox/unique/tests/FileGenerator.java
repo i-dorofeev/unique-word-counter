@@ -16,7 +16,7 @@ public class FileGenerator {
 		try (PrintWriter pw = new PrintWriter("temp/data.txt")) {
 			Random rnd = new Random();
 
-			for (int i = 0; i < 1000000; i++) {
+			for (int i = 0; i < 10000000; i++) {
 				pw.print("word" + rnd.nextInt(9));
 				pw.print(delimiters.charAt(rnd.nextInt(delimiters.length())));
 			}

@@ -27,7 +27,7 @@ public class TestClass {
 
 			try (FileInputStream fis = new FileInputStream(fileName)) {
 
-				byte[] buffer = new byte[32767];
+				byte[] buffer = new byte[16384];
 
 				int bytesRead;
 				while ( (bytesRead = fis.read(buffer)) != -1 ) {
